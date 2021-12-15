@@ -101,8 +101,8 @@ class AnimeHelper():
             raise requests.RequestException(f'Request for {url} failed')
 
 
-    def get_anime_info(self, id):
-        uri = f'/{id}'
+    def get_anime_info(self, anime_id):
+        uri = f'/{anime_id}'
         params = {
             'fields': ','.join(self._info_fields),
         }
