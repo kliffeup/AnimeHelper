@@ -42,8 +42,7 @@ class AnimeHelper():
             for json_obj in response_json['data']:
                 cur_anime = {}
                 if 'node' in json_obj:
-                    for i in json_obj['node']:
-                        cur_anime[i] = json_obj['node'][i]
+                    cur_anime = json_obj['node']
 
                 list_response.append(cur_anime)
             return list_response
@@ -95,7 +94,7 @@ class AnimeHelper():
             params=params,
         )
 
-        if response.status_code < 400:
+        if response.status_code == 200:
             return response.json()
         else:
             raise requests.RequestException(f'Request for {url} failed')
@@ -158,8 +157,7 @@ class AnimeHelper():
     def get_seasonal_anime(
         self, year=None, season=None, sort='anime_score', limit=10,
     ):
-        if year is None:
-            year = int(dt.now().year)
+        year = year or int(dt.now().year)
 
         if season is None:
             month_to_season = (
