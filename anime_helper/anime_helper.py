@@ -3,10 +3,12 @@ import requests
 from fire.core import _DictAsString
 
 
+# 'https://api.myanimelist.net/v2/' 'https://myanimelist.net/'
+
 class ApiCaller():
-    def __init__(self):
-        self._api_url = 'https://api.myanimelist.net/v2/'
-        self._base_url = 'https://myanimelist.net/'
+    def __init__(self, api_url, base_url, info_fields, ranking_types):
+        self._api_url = api_url
+        self._base_url = base_url
         self._headers = {'X-MAL-Client-ID': '57121927cbbd32b51805997e72fc2496'}
         self._find_fields = (
             'id',
@@ -15,18 +17,15 @@ class ApiCaller():
             'synopsis',
         )
 
-        self._info_fields = tuple()
-        self._ranking_types = tuple()
+        self._info_fields = info_fields
+        self._ranking_types = ranking_types
 
 
     def _parse_json(self, response_json):
         if response_json and 'data' in response_json:
             list_response = []
             for json_obj in response_json['data']:
-                cur_obj = {}
-                if 'node' in json_obj:
-                    cur_obj = json_obj['node']
-
+                cur_obj = json_obj.get('node', {})
                 list_response.append(cur_obj)
             return list_response
         else:
@@ -36,9 +35,8 @@ class ApiCaller():
     def _format_output(self, json_obj):
         if isinstance(json_obj, dict):
             del json_obj['main_picture']
-            if 'genres' in json_obj:
-                genres = (genre['name'] for genre in json_obj['genres'])
-                json_obj['genres'] = ', '.join(genres)
+            genres = (genre['name'] for genre in json_obj.get('genres', []))
+            json_obj['genres'] = ', '.join(genres)
 
             if 'alternative_titles' in json_obj:
                 synonyms, en_title, ja_title = map(
@@ -120,49 +118,47 @@ class ApiCaller():
 
 class AnimeHelper(ApiCaller):
     def __init__(self):
-        super().__init__()
-        self._api_url += 'anime'
-        self._base_url += 'anime'
-
-        self._info_fields = (
-            'title',
-            'alternative_titles',
-            'start_date',
-            'end_date',
-            'synopsis',
-            'mean',
-            'rank',
-            'popularity',
-            'num_list_users',
-            'num_scoring_users',
-            'nsfw',
-            'media_type',
-            'status',
-            'genres',
-            'num_episodes',
-            'source',
-            'rating',
-            'studios',
-        )
-
-        self._ranking_types = (
-            'all',
-            'airing',
-            'upcoming',
-            'tv',
-            'ova',
-            'movie',
-            'special',
-            'bypopularity',
-            'favorite',
+        super().__init__(
+            api_url='https://api.myanimelist.net/v2/anime',
+            base_url='https://myanimelist.net/anime',
+            info_fields=(
+                'title',
+                'alternative_titles',
+                'start_date',
+                'end_date',
+                'synopsis',
+                'mean',
+                'rank',
+                'popularity',
+                'num_list_users',
+                'num_scoring_users',
+                'nsfw',
+                'media_type',
+                'status',
+                'genres',
+                'num_episodes',
+                'source',
+                'rating',
+                'studios',
+            ),
+            ranking_types=(
+                'all',
+                'airing',
+                'upcoming',
+                'tv',
+                'ova',
+                'movie',
+                'special',
+                'bypopularity',
+                'favorite',
+            ),
         )
 
 
     def _format_output(self, json_obj):
         if isinstance(json_obj, dict):
-            if 'studios' in json_obj:
-                studios = (studio['name'] for studio in json_obj['studios'])
-                json_obj['studios'] = ', '.join(studios)
+            studios = (studio['name'] for studio in json_obj.get('studios', []))
+            json_obj['studios'] = ', '.join(studios)
 
         return super()._format_output(json_obj)
 
@@ -202,44 +198,48 @@ class AnimeHelper(ApiCaller):
 
 class MangaHelper(ApiCaller):
     def __init__(self):
-        super().__init__()
-        self._api_url += 'manga'
-        self._base_url += 'manga'
-        self._info_fields = (
-            'title',
-            'alternative_titles', 
-            'start_date', 
-            'end_date', 
-            'synopsis',
-            'mean', 
-            'rank', 
-            'popularity', 
-            'num_list_users', 
-            'num_scoring_users',
-            'nsfw', 
-            'media_type', 
-            'status', 
-            'num_volumes', 
-            'num_chapters',
-            'authors',
-            'genres',
+        super().__init__(
+            api_url='https://api.myanimelist.net/v2/manga',
+            base_url='https://myanimelist.net/manga',
+            info_fields=(
+                'title',
+                'alternative_titles',
+                'start_date',
+                'end_date',
+                'synopsis',
+                'mean',
+                'rank',
+                'popularity',
+                'num_list_users',
+                'num_scoring_users',
+                'nsfw',
+                'media_type',
+                'status',
+                'num_volumes',
+                'num_chapters',
+                'authors',
+                'genres',
+            ),
+            ranking_types=(
+                'all',
+                'manga',
+                'novels',
+                'oneshots',
+                'doujin',
+                'manhwa',
+                'manhua',
+                'bypopularity',
+                'favorite',
+            ),
         )
 
-        self._ranking_types = (
-            'all',
-            'manga',
-            'novels',
-            'oneshots',
-            'doujin',
-            'manhwa',
-            'manhua',
-            'bypopularity',
-            'favorite',
-        )
 
     def _format_output(self, json_obj):
         if 'authors' in json_obj:
-            authors = (str(a['node']['id']) for a in json_obj['authors'])
+            authors = (
+                str(a['node']['id']) for a in json_obj.get('authors', [])
+            )
+
             json_obj['authors'] = ', '.join(authors)
 
         return super()._format_output(json_obj)
